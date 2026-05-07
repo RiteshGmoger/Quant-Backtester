@@ -40,42 +40,32 @@ def get_price_data(tickers, start, end):
 
         returns None if download fails or no data comes back
     """
-
-    # let people pass a single string, not just a list
+    # keeps tickers always list
     if isinstance(tickers, str):
         tickers = [tickers]
 
     logger.info("─"*71)
     logger.info("│" + "DOWNLOADING PRICE DATA".center(69) + "│")
     logger.info("─"*71)
-    logger.info("│" + ("Tickers".center(35) + ":" + "%d".center(34) % len(tickers)) + "│")
-    logger.info("│" + ("From".center(35) + ":" + "%s".center(25) % start) + "│")
-    logger.info("│" + ("To".center(35) + ":" + "%s".center(25) % end) + "│")
+    logger.info("│" + "Tickers".center(34) + ":" + f"{len(tickers)}".center(34) + "│")
+    logger.info("│" + "From".center(34) + ":" + f"{start}".center(34) + "│")
+    logger.info("│" + "To".center(34) + ":" + f"{end}".center(34) + "│")
     logger.info("─"*71)
 
     try:
-        raw = yf.download(
-            tickers,
-            start=start,
-            end=end,
-            progress=False,
-            auto_adjust=True
-        )
+        df = yf.download(tickers,start=start,end=end,progress=False,auto_adjust=True)
 
-        if raw.empty:
-            logger.warning("no data returned — check tickers and date range")
+        if df.empty:
+            logger.warning("no data returned - check tickers and date range")
             return None
-
-        # yf.download returns MultiIndex columns when multiple tickers
-        # we only need Close prices
-        if isinstance(raw.columns, pd.MultiIndex):
-            df = raw["Close"]
+            
+        if isinstance(df.columns, pd.MultiIndex):
+            close = df['Close']
         else:
-            # single ticker comes back as flat columns(when passed single ticker)
-            df = raw[["Close"]]
-            df.columns = tickers
+            close = df[['Close']]
+            close.columns = tickers
 
-        df = df.dropna(how="all")
+        close = close.dropna(how="all")
         """
             WHY dropna(how="all") and NOT dropna()
 
@@ -109,10 +99,10 @@ def get_price_data(tickers, start, end):
             We preserve time continuity even if some stocks are missing.
         """
 
-        logger.info("│" + ("got %d rows, %d tickers" % (len(df), len(df.columns))).center(69) + "│")
+        logger.info("│" + ("got %d rows, %d tickers" % (len(close), len(close.columns))).center(69) + "│")
         logger.info("─"*71 + "\n")
 
-        return df
+        return close
 
     except Exception as e:
         logger.error("download failed: %s", e)
@@ -120,7 +110,6 @@ def get_price_data(tickers, start, end):
 
 
 if __name__ == "__main__":
-    # quick test - download reliance for 2024 and print first 5 rows
     df = get_price_data("RELIANCE.NS", start="2024-01-01", end="2024-12-31")
 
     if df is not None:
