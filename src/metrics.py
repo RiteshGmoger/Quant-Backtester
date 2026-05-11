@@ -35,10 +35,7 @@ def win_rate(trade_pnls):
     
     return (np.sum(trade_pnls > 0) / len(trade_pnls));
     
-def calmar_ratio(returns, equity):
-    annual_returns = np.mean(returns) * 252;
-    max_dd = max_drawdown(equity);
-    
+def calmar_ratio(annual_returns, max_dd):
     if(max_dd == 0):
         return 0;
     
@@ -59,13 +56,14 @@ def sortino_ratio(returns, risk_free_annual=0.04):
     
     return (np.mean(excess) / downside_std * np.sqrt(252));
     
-    
-returns = [0.001, -0.002, 0.003, 0.001, -0.001]
-equity = [100, 110, 115, 90, 95, 120]
-trades = [100, -50, 200, -30, 150]
 
-print(f"Sharpe: {sharpe(returns)}");
-print(f"Max DD: {max_drawdown(equity)}");
-print(f"Win Rate: {win_rate(trades)}");
-print(f"calmer ratio: {calmar_ratio(returns,equity)}")
-print(f"sortino ratio: {sortino_ratio(returns)}")
+if __name__ == "__main__":
+    returns = [0.001, -0.002, 0.003, 0.001, -0.001];
+    equity  = [100, 110, 115, 90, 95, 120];
+    trades  = [100, -50, 200, -30, 150];
+ 
+    print(f"Sharpe:       {sharpe(returns)}");
+    print(f"Max DD:       {max_drawdown(equity)}");
+    print(f"Win Rate:     {win_rate(trades)}");
+    print(f"Calmar Ratio: {calmar_ratio(np.mean(returns) * 252, max_drawdown(equity))}");
+    print(f"Sortino:      {sortino_ratio(returns)}");
