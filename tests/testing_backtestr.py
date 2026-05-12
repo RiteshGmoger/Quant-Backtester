@@ -10,6 +10,6 @@ prices = pd.DataFrame({'Open': np.random.uniform(100, 200, 100),'Close': np.rand
 signals = pd.Series(0, index = dates) # make all dates signals 0
 signals.iloc[::10] = 1 # every 10th element is 1
 
-bt = Backtester(prices, signals, hold_days = 5)
+bt = Backtester(prices, signals, holding_days = 5)
 bt.run()
-print(bt.get_results())
+print(bt.results())
