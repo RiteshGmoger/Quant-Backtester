@@ -6,8 +6,8 @@ class Backtester:
         self.signals = signals_df;
         self.hold_days = hold_days;
         self.initial_capital = initial_capital;
-        # prices_df: DataFrame with Open, Close columns
-        # signals_df: 1 = buy signal, 0 = no signal
+        # prices: DataFrame with Open, Close columns
+        # signals: 1 = buy signal, 0 = no signal
         # hold_days: how many days to hold each position
         # initial_capital: starting money
 
@@ -16,37 +16,32 @@ class Backtester:
         self.equity_curve = [self.initial_capital]
         capital = self.initial_capital
         
-        dates = self.signals.index.tolist()
+        dates = self.signals.index.tolist() # takes index of signals which was dates
         
         for i, date in enumerate(dates):
-            # check if signal exists on this date
-            if self.signals.iloc[i] != 1:
+            # check if signal exists on this date (only buy other day continue)
+            if self.signals.iloc[i] != 1: # get row by position not dates (for pd series)
                 continue
             
-            # entry is next day open (D+1)
+            # entry is next day open
             entry_idx = i + 1
             exit_idx = i + 1 + self.hold_days
             
-            # make sure we have enough future data
             if exit_idx >= len(dates):
                 continue
             
             entry_date = dates[entry_idx]
             exit_date = dates[exit_idx]
             
-            # get prices
             entry_price = self.prices.loc[entry_date, 'Open']
             exit_price = self.prices.loc[exit_date, 'Open']
             
-            # apply transaction costs
-            entry_price = entry_price * (1 + 0.0009)  # pay 0.09% more to buy
+            entry_price = entry_price * (1 + 0.0009)  # pay 0.09% more to buy (slippage)
             exit_price = exit_price * (1 - 0.0009)    # receive 0.09% less on sell
             
-            # calculate return
             trade_return = (exit_price - entry_price) / entry_price
             self.trade_pnls.append(trade_return)
             
-            # update equity
             capital = capital * (1 + trade_return)
             self.equity_curve.append(capital)
 
