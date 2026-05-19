@@ -53,7 +53,7 @@ def get_price_data(tickers, start, end):
     logger.info("─"*71)
 
     try:
-        df = yf.download(tickers,start=start,end=end,progress=False,auto_adjust=True)
+        df = yf.download(tickers,start = start,end = end,progress = False,auto_adjust = True)
 
         if df.empty:
             logger.warning("no data returned - check tickers and date range")
@@ -67,7 +67,7 @@ def get_price_data(tickers, start, end):
 
         close = close.dropna(how="all")
         """
-            WHY dropna(how="all") and NOT dropna()
+            WHY dropna(how = "all") and not just dropna()
 
             Example data:
             Date        RELIANCE   TCS   INFY
@@ -76,7 +76,7 @@ def get_price_data(tickers, start, end):
             Day3         105       NaN    315
             Day4         NaN       NaN    NaN
 
-            Using dropna() (default: how="any"):
+            Using dropna() (default: how = "any"):
                 removes Day2, Day3, Day4
 
             Result:
@@ -84,10 +84,10 @@ def get_price_data(tickers, start, end):
             Day1         100       200    300
 
             PROBLEM:
-            Valid data (TCS, INFY) got deleted just because one stock was NaN.
-            This destroys data in multi-stock systems.
+            Valid data (TCS, INFY) got deleted just because one stock was NaN
+            This destroys data in multi-stock systems
 
-            Using dropna(how="all"):
+            Using dropna(how = "all"):
                 removes only Day4
 
             Result:
@@ -96,7 +96,7 @@ def get_price_data(tickers, start, end):
             Day2         NaN       210    310
             Day3         105       NaN    315
 
-            We preserve time continuity even if some stocks are missing.
+            We preserve time continuity even if some stocks are missing
         """
 
         logger.info("│" + ("got %d rows, %d tickers" % (len(close), len(close.columns))).center(69) + "│")
