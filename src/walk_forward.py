@@ -37,11 +37,11 @@ class WalkForwardEngine:
             window_results = bt.results()
 
             window_results['window'] = window_num
-            window_results['test_start'] = str(train_end.date())
+            window_results['test_start'] = str(train_end.date()) # contains: Timestamp('2024-07-01 00:00:00') thats why .date()
             window_results['test_end'] = str(test_end.date())
             results.append(window_results)
 
-            window_start += relativedelta(months=self.test_months)
+            window_start += relativedelta(months = self.test_months)
             window_num += 1
 
         return pd.DataFrame(results)
