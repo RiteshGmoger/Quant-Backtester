@@ -38,7 +38,7 @@ class Backtester:
             
             cap = cap * (1 + returns);
             self.equity_curves.append(cap);
-            
+
     
     def results(self):
         from .metrics import sharpe, max_drawdown, win_rate, calmar_ratio, sortino_ratio
@@ -54,3 +54,4 @@ class Backtester:
             'Calmar ratio'  :   calmar_ratio(np.mean(self.trades) * 252,max_drawdown(self.equity_curves)),
             'total trades'  :   len(self.trades)
         };
+        

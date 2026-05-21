@@ -11,7 +11,7 @@
 import logging
 import sys
 import warnings
-warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category = FutureWarning)
 
 import pandas as pd
 import yfinance as yf
@@ -96,7 +96,7 @@ def get_price_data(tickers, start, end):
             Day2         NaN       210    310
             Day3         105       NaN    315
 
-            We preserve time continuity even if some stocks are missing
+            preserved continuity even if some stocks are missing
         """
 
         logger.info("│" + ("got %d rows, %d tickers" % (len(close), len(close.columns))).center(69) + "│")

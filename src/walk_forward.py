@@ -3,13 +3,12 @@ from src.backtester import Backtester
 import pandas as pd
 
 class WalkForwardEngine:
-    def __init__(self, prices_df, signals_df,
-                 train_months=12, test_months=3):
-        self.prices = prices_df
-        self.signals = signals_df
+    def __init__(self, prices, signals,train_months = 12, test_months = 3):
+        self.prices = prices
+        self.signals = signals
         self.train_months = train_months
         self.test_months = test_months
-        
+    
     
     def run(self):
         results = []
@@ -21,20 +20,14 @@ class WalkForwardEngine:
         window_num = 0
 
         while True:
-            train_end = window_start + relativedelta(months=self.train_months)
-            test_end = train_end + relativedelta(months=self.test_months)
+            train_end = window_start + relativedelta(months = self.train_months)
+            test_end = train_end + relativedelta(months = self.test_months)
 
             if test_end > end:
                 break
 
-            test_prices = self.prices[
-                (self.prices.index >= train_end) &
-                (self.prices.index < test_end)
-            ]
-            test_signals = self.signals[
-                (self.signals.index >= train_end) &
-                (self.signals.index < test_end)
-            ]
+            test_prices = self.prices[(self.prices.index >= train_end) & (self.prices.index < test_end)]
+            test_signals = self.signals[(self.signals.index >= train_end) & (self.signals.index < test_end)]
 
             if len(test_prices) < 10:
                 break
