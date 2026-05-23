@@ -28,12 +28,12 @@ def max_drawdown(equity_curves):
         
     return drawdown;
     
-def win_rate(trade_pnls):
-    trade_pnls = np.array(trade_pnls);
-    if(len(trade_pnls) == 0):
+def win_rate(trade_val):
+    trade_val = np.array(trade_val);
+    if(len(trade_val) == 0):
         return 0;
     
-    return (np.sum(trade_pnls > 0) / len(trade_pnls));
+    return (np.sum(trade_val > 0) / len(trade_val));
     
 def calmar_ratio(annual_returns, max_dd):
     if(max_dd == 0):
@@ -41,7 +41,7 @@ def calmar_ratio(annual_returns, max_dd):
     
     return annual_returns / abs(max_dd);
     
-def sortino_ratio(returns, risk_free_annual=0.04):
+def sortino_ratio(returns, risk_free_annual = 0.04):
     returns = np.array(returns)
     risk_free_per_day = risk_free_annual / 252;
     

@@ -19,13 +19,8 @@ def run():
 	
 	bt = Backtester(reliance_price,signals,holding_days = 40);
 	bt.run();
-	results = bt.results();
-
-	print("\n" + "─" * 50);
-	print("BACKTEST RESULTS".center(50));
-	print("─" * 50);
-	for key, val in results.items():
-		print(f"{key : ^25}:{val : ^ 25}");
+	
+	print(bt.results());
 
 
 if __name__ == "__main__":
