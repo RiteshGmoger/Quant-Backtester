@@ -1,7 +1,7 @@
 import numpy as np
 
-def sharpe(returns,risk_free_annual = 0.04):
-    risk_free_per_day = risk_free_annual / 252;
+def sharpe(returns,risk_free_annual = 0.04,periods_per_year = 252):
+    risk_free_per_day = risk_free_annual / periods_per_year;
     returns = np.array(returns);
     
     excess = returns - risk_free_per_day;
@@ -9,7 +9,7 @@ def sharpe(returns,risk_free_annual = 0.04):
     if(np.std(excess,ddof = 1) == 0):
         return 0;
         
-    return (np.mean(excess) * np.sqrt(252) /  np.std(excess,ddof = 1));
+    return (np.mean(excess) * np.sqrt(periods_per_year) /  np.std(excess,ddof = 1));
     
 def max_drawdown(equity_curves):
     equity_curves = np.array(equity_curves);
@@ -41,20 +41,20 @@ def calmar_ratio(annual_returns, max_dd):
     
     return annual_returns / abs(max_dd);
     
-def sortino_ratio(returns, risk_free_annual = 0.04):
+def sortino_ratio(returns, risk_free_annual = 0.04, periods_per_year = 252):
     returns = np.array(returns)
-    risk_free_per_day = risk_free_annual / 252;
+    risk_free_per_day = risk_free_annual / periods_per_year;
     
     excess = returns - risk_free_per_day;
     downside = excess[excess < 0]
-    if(len(downside) == 0):
+    if(len(downside) < 2):
         return 0;
     
     downside_std = np.std(downside,ddof = 1);
     if(downside_std == 0):
         return 0;
     
-    return (np.mean(excess) / downside_std * np.sqrt(252));
+    return (np.mean(excess) / downside_std * np.sqrt(periods_per_year));
     
 
 if __name__ == "__main__":

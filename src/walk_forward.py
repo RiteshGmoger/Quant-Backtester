@@ -3,9 +3,10 @@ from src.backtester import Backtester
 import pandas as pd
 
 class WalkForwardEngine:
-    def __init__(self, prices, signals,train_months = 12, test_months = 3):
+    def __init__(self, prices, signals, holding_days = 40, train_months = 12, test_months = 3):
         self.prices = prices;
         self.signals = signals;
+        self.holding_days = holding_days;
         self.train_months = train_months;
         self.test_months = test_months;
     
@@ -31,14 +32,15 @@ class WalkForwardEngine:
             if len(test_prices) < 10:
                 break;
 
-            bt = Backtester(test_prices, test_signals);
+            bt = Backtester(test_prices, test_signals, holding_days = self.holding_days);
             bt.run();
             window_results = bt.results();
 
-            window_results['window'] = window_num;
-            window_results['test_start'] = str(train_end.date()); # contains: Timestamp('2024-07-01 00:00:00') thats why .date()
-            window_results['test_end'] = str(test_end.date());
-            results.append(window_results);
+            if window_results:
+                window_results['window'] = window_num;
+                window_results['test_start'] = str(train_end.date()); # contains: Timestamp('2024-07-01 00:00:00') thats why .date()
+                window_results['test_end'] = str(test_end.date());
+                results.append(window_results);
 
             window_start += relativedelta(months = self.test_months);
             window_num += 1;

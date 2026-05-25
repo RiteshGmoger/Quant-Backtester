@@ -50,12 +50,16 @@ def get_price_data(tickers, start, end):
             return None;
             
         if isinstance(df.columns, pd.MultiIndex):
-            close = df['Close'];
+            open_df  = df['Open']
+            close_df = df['Close']
         else:
-            close = df[['Close']];
-            close.columns = tickers;
+            open_df  = df[['Open']];
+            open_df.columns = tickers;
+            close_df = df[['Close']];
+            close_df.columns = tickers;
             
-        close = close.dropna(how = "all");
+        open_df = open_df.dropna(how = "all")
+        close_df = close_df.dropna(how = "all")
         """
             WHY dropna(how = "all") and not just dropna()
 
@@ -89,10 +93,10 @@ def get_price_data(tickers, start, end):
             preserved continuity even if some stocks are missing
         """
 
-        logger.info("│" + ("got %d rows, %d tickers" % (len(close), len(close.columns))).center(69) + "│");
+        logger.info("│" + ("got %d rows, %d tickers" % (len(close_df), len(close_df.columns))).center(69) + "│");
         logger.info("─"*71 + "\n");
 
-        return close;
+        return {"open": open_df, "close": close_df};
 
     except Exception as e:
         logger.error("download failed: %s", e);
@@ -100,7 +104,8 @@ def get_price_data(tickers, start, end):
 
 
 if __name__ == "__main__":
-    df = get_price_data("RELIANCE.NS", start = "2024-01-01", end = "2024-12-31");
+    from src.stock_list import NIFTY50
+    df = get_price_data(NIFTY50, start = "2024-01-01", end = "2024-12-31");
 
     if df is not None:
-        print(df.head());
+        print(df["close"].head());
