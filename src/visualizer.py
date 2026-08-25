@@ -1,8 +1,14 @@
 import matplotlib.pyplot as plt;
 import numpy as np;
+import os;
 
 
 def save_and_show(save_path, title):
+    # results/charts is gitignored, so it won't exist on a fresh clone
+    directory = os.path.dirname(save_path);
+    if directory:
+        os.makedirs(directory, exist_ok = True);
+
     plt.savefig(save_path, dpi = 150, bbox_inches = 'tight');
     print(f"\nsaved  -> {save_path}");
     print(f"showing [{title}] - close window to continue\n");

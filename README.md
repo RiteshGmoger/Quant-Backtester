@@ -1,144 +1,120 @@
-# Walk-forward Backtested Momentum Strategy — NSE Equities
+# quant backtester
 
-Quantitative momentum strategy with walk-forward validation, built from scratch in Python
-Runs on real NSE price data via `yfinance` and outputs metrics and charts.
+a momentum backtester for nse stocks, written from scratch in python. no backtrader, no vectorbt, no library doing the hard part for me. yfinance for data, pandas for the frames, everything else is mine.
 
----
+built this because i wanted to actually understand what a backtest does instead of trusting a library's output.
 
-## What this does
+## the strategy
 
-Most backtests are broken. They optimize on historical data, measure on the same data, and call it a strategy. That is not a backtest. That is memorization.
+dead simple on purpose:
 
-This project is structured for **walk-forward validation**: split the data into windows, work on one period, test on the next period the strategy has not touched, roll forward, repeat. That is the validation style used in serious systematic research.
+- universe: the `NIFTY50` list in `src/stock_list.py` (49 tickers, one short of 50)
+- signal: close price above the 20 day moving average
+- entry: **next day's open**, never the same close
+- hold: 40 trading days
+- exit: open price after the hold
+- costs: 0.09% on entry and 0.09% on exit
+- one trade at a time, no overlapping positions
 
-**Signal logic:**
-- universe: Nifty 50 stocks (`src/stock_list.py`; current list contains 49 tickers)
-- signal: price is above the 20-day moving average
-- entry: next-day open after the signal fires, never same-day close — this avoids look-ahead bias
-- hold period: 40 trading days
-- exit: open price after the holding period
-- transaction costs: 0.09% round-trip (brokerage + slippage, both sides)
-- concurrent trades: one at a time, no capital overlap
+the "next day's open" bit is the whole point. if you enter at the same close that fired the signal, you needed tomorrow's information today. that is not a strategy, that is time travel. it is also the single most common way people fool themselves with a backtest.
 
----
+the no-overlap rule matters too. without it the engine stacked hundreds of simultaneous trades on the same capital and the equity curve went to the moon. it looked amazing. it was fake.
 
-## Results
+## results
 
-> Numbers below were produced by running the current code on the selected stock and date range.
+reliance.ns, jan 2023 to dec 2024, 40 day hold:
 
 | metric | value |
-|--------|-------:|
-| Sharpe ratio | 0.6118393055617044 |
-| Sortino ratio | 1.4770448305896549 |
-| Max drawdown | -0.10662040724015613 |
-| Calmar ratio | 1.7231081759769789 |
-| Win rate | 0.5555555555555556 |
-| Initial capital | 10000.00 |
-| Final capital | 12521.28 |
+|--------|------:|
+| sharpe | 0.61 |
+| sortino | 1.48 |
+| max drawdown | -10.7% |
+| calmar | 1.72 |
+| win rate | 55.6% |
+| starting capital | 10,000 |
+| ending capital | 12,521 |
 
-~12% CAGR-ish before realistic taxes
+so roughly +25% over two years after costs. not a money printer. sharpe under 1 means the returns are not paying you much for the volatility you sat through. i am reporting it as it is instead of tuning parameters until the numbers looked good, because tuning until it looks good is how you build a strategy that only works on the past.
 
----
+sortino being more than 2x sharpe is the interesting part. downside moves were smaller than upside moves, which is what you want from a momentum system.
 
-## Project structure
-
-```text
-quant-backtester/
-├── run_backtest.py          runs the whole backtest
-├── src/
-│   ├── backtester.py        core engine - entry logic, trade loop, overlap rule
-│   ├── metrics.py           Sharpe, Sortino, max drawdown, Calmar, win rate
-│   ├── walk_forward.py      rolling train/test windows
-│   ├── Visualizer.py        equity curve, drawdown chart, returns bar chart
-│   ├── data_loader.py       yfinance wrapper with clean logging
-│   └── stock_list.py        Nifty 50 + Nifty Next 50 tickers
-├── results/
-│   └── charts/              equity.png, drawdown.png, returns.png
-├── tests/
-├── requirements.txt
-└── README.md
-```
-
----
-
-## How to run
+## running it
 
 ```bash
-# 1. activate environment
 conda activate quant
+```
 
-# 2. install dependencies
+```bash
 pip install -r requirements.txt
+```
 
-# 3. run
+```bash
 python run_backtest.py
 ```
 
-What happens when you run it:
-- downloads price data for the configured tickers
-- runs the backtest with the MA20 signal on the selected stock
-- prints the results table in the terminal
-- opens the equity curve, then the drawdown chart, then the returns chart
-- saves all three charts to `results/charts/`
+what happens: downloads the nifty 50 price data, runs the ma20 signal on reliance, prints the metrics table, then opens three charts one at a time (equity curve, drawdown, trade returns). close each window to get the next one. all three also save to `results/charts/`.
 
----
+if you are on a headless box the `plt.show()` calls will just no-op, the pngs still get written.
 
-## Metrics explained
+to change the ticker or dates, edit the constants at the top of [run_backtest.py](run_backtest.py):
 
-| metric | what it means |
-|--------|---------------|
-| Sharpe ratio | excess return per unit of total volatility. Above 1.0 is decent, above 2.0 is strong |
-| Sortino ratio | like Sharpe but only counts downside volatility. Better for asymmetric strategies |
-| Max drawdown | worst peak-to-trough loss in the period. The number you lose sleep over |
-| Calmar ratio | annualized return divided by max drawdown. Return per unit of drawdown risk |
-| Win rate | percentage of trades that closed green. 55%+ with decent payoff ratio is solid |
-
----
-
-## Why no look-ahead bias
-
-Signal fires on **close of day i**.
-Entry happens at **open of day i+1**.
-
-If you enter at the same close that generated the signal, you would need to know the close before the market closes. That is impossible in live trading. Next-day open is the implementable entry.
-
----
-
-## Walk-forward methodology
-
-```text
-[──── 12 months train ────][── 3 months test ──]
-                           [──── 12 months train ────][── 3 months test ──]
-                                                      [──── 12 months train ────][── 3 months test ──]
+```python
+TICKER = "RELIANCE.NS"
+START = "2023-01-01"
+END = "2024-12-31"
+HOLDING_DAYS = 40
 ```
 
-Parameters are not fitted inside the test window. The current engine is structured for walk-forward evaluation, and the train window is reserved for future parameter fitting and selection.
-
-Current behavior:
-- the engine rolls forward through time
-- each test window is evaluated on unseen data
-- the code is set up for future optimization logic inside the training window
-
----
-
-## Implementation notes
-
-- The current signal in `run_backtest.py` is **price above the 20-day moving average**, not a strict crossover event.
-- The current `walk_forward.py` performs rolling out-of-sample testing; it does not yet fit or optimize parameters inside the train window.
-- The current ticker list under `NIFTY50` contains 49 tickers in code.
-
----
-
-## Dependencies
+## what's in here
 
 ```text
-yfinance
-pandas
-numpy
-matplotlib
-python-dateutil
+run_backtest.py          the entry point, wires everything together
+src/
+  backtester.py          the engine - trade loop, entry timing, no-overlap rule
+  metrics.py             sharpe, sortino, max drawdown, calmar, win rate
+  walk_forward.py        rolling train/test window splitter
+  visualizer.py          the three charts
+  data_loader.py         yfinance wrapper with logging that doesn't spam
+  stock_list.py          nifty50, next50, bank, it, pharma - 103 tickers total
+results/charts/          pngs land here
+tests/                   scratch scripts i used while building each piece
 ```
 
----
+## the metrics, in plain words
 
-Built by Ritesh G Moger
+| metric | what it actually tells you |
+|--------|---------------------------|
+| sharpe | return per unit of total wobble. above 1 is decent, above 2 is genuinely good |
+| sortino | same but it only counts the downside wobble. fairer to strategies that spike up |
+| max drawdown | worst peak to trough fall. the number that decides whether you'd have quit |
+| calmar | annual return divided by max drawdown. return per unit of pain |
+| win rate | how many trades closed green. means nothing without knowing win size vs loss size |
+
+win rate is the one everybody quotes and it is the least useful. you can win 80% of the time and still lose money if the 20% are big enough.
+
+## walk forward
+
+`walk_forward.py` splits the timeline into rolling windows:
+
+```text
+[---- 12mo train ----][-- 3mo test --]
+                      [---- 12mo train ----][-- 3mo test --]
+                                            [---- 12mo train ----][-- 3mo test --]
+```
+
+each test window is data the previous window never touched, and the whole thing rolls forward 3 months at a time.
+
+being honest about the current state: the splitting and the rolling out of sample evaluation work. the train window is not yet used to fit parameters, so right now it is out of sample testing rather than full walk forward optimisation. the structure is there for it, the fitting step is the next thing i am building. `run_backtest.py` calls the single backtest path, not this one.
+
+## what i'd fix next
+
+- fit the ma window inside the train period instead of hardcoding 20
+- run the backtest across the whole universe rather than one ticker at a time
+- position sizing, right now every trade is all the capital
+- a proper test suite, the stuff in `tests/` is scratch work not real tests
+
+## stack
+
+python, pandas, numpy, matplotlib, yfinance
+
+built by ritesh g moger
